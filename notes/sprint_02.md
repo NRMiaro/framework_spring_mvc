@@ -4,8 +4,8 @@ Si l'URL est inconnue, afficher toutes les URL supportees
 
 # TODO
 ## Annotation **@UrlMapping** 
-- [ ] Elements annotables: methodes
-- [ ] Parametre: String url
+- [x] Elements annotables: methodes
+- [x] Parametre: String url
 ## Update du scan des controllers:
 - [ ] Obtenir toutes les methodes annotees de @UrlMapping
 - [ ] Recuperer l'url passee
