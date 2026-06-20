@@ -2,11 +2,15 @@ package framework.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
 import framework.annotations.Controller;
+import framework.annotations.UrlMapping;
 import framework.utils.PackageScanner;
 import framework.utils.ScanException;
 
@@ -15,6 +19,8 @@ public class FrontControllerServlet extends HttpServlet {
     private String controllersPackage;
     // private List<String> controllerNames;
     private List<Class<?>> controllerClasses;
+    private Map<String, Method> urlMapper;
+    
 
     @Override
     public void init() throws ServletException {
@@ -58,6 +64,33 @@ public class FrontControllerServlet extends HttpServlet {
         this.controllerClasses = PackageScanner.getAnnotatedClassesInPackage(
             controllersPackage, 
             Controller.class);
+
+        for (Class<?> controllerClazz: controllerClasses){
+            scanUrlsIn(controllerClazz);
+        }
+
+    }
+
+    public void scanUrlsIn(Class<?> controllerClazz){
+
+        // verifier que c'est un controller
+        if (controllerClazz.getAnnotation(Controller.class) == null)
+            throw new ScanException("Erreur lors du scan: " + controllerClazz.getName() + " n'est pas un Controller");
+
+        for (Method method : controllerClazz.getDeclaredMethods()){
+            UrlMapping urlMapping = method.getAnnotation(UrlMapping.class);
+            if (urlMapping != null){
+                String URL = urlMapping.url();
+                if (urlMapper.containsKey(URL)){
+                    // version simple sans check de method POST/GET/... 
+                    // donc pour l'instant une meme route est attribuable a une seule fonction     
+                    throw new ScanException("L'URL: " + URL + " a ete utilisee pour plusieurs methodes");
+                }
+
+                
+                urlMapper.put(URL, method);
+            }
+        }
 
     }
 
