@@ -8,18 +8,19 @@ import jakarta.servlet.http.*;
 
 import framework.annotations.Controller;
 import framework.utils.PackageScanner;
+import framework.utils.ScanException;
 
 public class FrontControllerServlet extends HttpServlet {
 
     private String controllersPackage;
-    private List<String> listControllers;
+    // private List<String> controllerNames;
+    private List<Class<?>> controllerClasses;
 
     @Override
     public void init() throws ServletException {
         try {
             loadParams();
             scanControllers();
-            scanUrls();
         } catch (Exception e) {
             throw new ServletException("Échec: ", e);
         }
@@ -43,18 +44,21 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     private void scanControllers()
-    throws ServletException, IOException, ClassNotFoundException {
+    throws ScanException, IOException, ClassNotFoundException {
         if (this.controllersPackage == null || this.controllersPackage.trim().isEmpty()) {
-            throw new ServletException("Le paramètre d'initialisation 'controller_package_name' est manquant.");
+            throw new ScanException("Le paramètre d'initialisation 'controller_package_name' est manquant.");
         }
 
-        this.listControllers = PackageScanner.getAnnotatedClassesNamesInPackage(
-            controllersPackage,
-            Controller.class);
-    }
+        // ancienne version (sprint 01): on stocke les noms des controllers
+        // this.controllerNames = PackageScanner.getAnnotatedClassesNamesInPackage(
+        //     controllersPackage,
+        //     Controller.class);
 
-    private void scanUrls(){
-        
+        // nouvell version: stocker les class
+        this.controllerClasses = PackageScanner.getAnnotatedClassesInPackage(
+            controllersPackage, 
+            Controller.class);
+
     }
 
     private void processRequest(HttpServletRequest req, HttpServletResponse res) throws IOException {
@@ -71,8 +75,8 @@ public class FrontControllerServlet extends HttpServlet {
             out.println("<!DOCTYPE html><html><body>");
             out.println("<h3>Controllers: </h3> " + controllersPackage + "<br><ul>");
 
-            for (String controllerName : listControllers) {
-                out.println("<li>" + controllerName + "</li>");
+            for (Class<?> controllerClass: controllerClasses) {
+                out.println("<li>" + controllerClass.getName() + "</li>");
             }
             out.println("</ul></body></html>");
         } catch (Exception e) {
