@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.*;
 
 import framework.annotations.Controller;
 import framework.utils.PackageScanner;
@@ -66,8 +64,7 @@ public class FrontControllerServlet extends HttpServlet {
 
         try (PrintWriter out = res.getWriter()) {
             out.println("<!DOCTYPE html><html><body>");
-            out.println("<h3>URL actuelle:</h3> " + mainURL + "<br>");
-            out.println("<h3>Liste des controllers dans:</h3> " + controllersPackage + "<br><ul>");
+            out.println("<h3>Controllers: </h3> " + controllersPackage + "<br><ul>");
 
             for (String controllerName : listControllers) {
                 out.println("<li>" + controllerName + "</li>");
