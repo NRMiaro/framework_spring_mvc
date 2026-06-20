@@ -12,6 +12,7 @@ import jakarta.servlet.http.*;
 import framework.annotations.Controller;
 import framework.annotations.UrlMapping;
 import framework.utils.PackageScanner;
+import framework.utils.Rules;
 import framework.utils.ScanException;
 
 public class FrontControllerServlet extends HttpServlet {
@@ -65,19 +66,19 @@ public class FrontControllerServlet extends HttpServlet {
             controllersPackage, 
             Controller.class);
 
-        for (Class<?> controllerClazz: controllerClasses){
-            scanUrlsIn(controllerClazz);
+        for (Class<?> controllerClass: controllerClasses){
+            scanUrlsIn(controllerClass);
         }
 
     }
 
-    public void scanUrlsIn(Class<?> controllerClazz){
+    public void scanUrlsIn(Class<?> controllerClass){
 
         // verifier que c'est un controller
-        if (controllerClazz.getAnnotation(Controller.class) == null)
-            throw new ScanException("Erreur lors du scan: " + controllerClazz.getName() + " n'est pas un Controller");
+        if (controllerClass.getAnnotation(Controller.class) == null)
+            throw new ScanException("Erreur lors du scan: " + controllerClass.getName() + " n'est pas un Controller");
 
-        for (Method method : controllerClazz.getDeclaredMethods()){
+        for (Method method : controllerClass.getDeclaredMethods()){
             UrlMapping urlMapping = method.getAnnotation(UrlMapping.class);
             if (urlMapping != null){
                 String URL = urlMapping.url();
@@ -85,9 +86,9 @@ public class FrontControllerServlet extends HttpServlet {
                     // version simple sans check de method POST/GET/... 
                     // donc pour l'instant une meme route est attribuable a une seule fonction     
                     throw new ScanException("L'URL: " + URL + " a ete utilisee pour plusieurs methodes");
-                }
+                } else if (!Rules.isValidUrl(URL))
+                    throw new ScanException("URL invalide pour " + controllerClass.getName() + "." + method.getName());
 
-                
                 urlMapper.put(URL, method);
             }
         }
@@ -106,12 +107,21 @@ public class FrontControllerServlet extends HttpServlet {
 
         try (PrintWriter out = res.getWriter()) {
             out.println("<!DOCTYPE html><html><body>");
+            // Controllers
             out.println("<h3>Controllers: </h3> " + controllersPackage + "<br><ul>");
 
             for (Class<?> controllerClass: controllerClasses) {
                 out.println("<li>" + controllerClass.getName() + "</li>");
             }
-            out.println("</ul></body></html>");
+            out.println("</ul>");
+
+            // URLs
+            out.println("<h3>Routes: </h3><br><ul>");
+            urlMapper.forEach((url, method) -> {
+                out.println("<li>" + url + " -> " + method.getDeclaringClass().getName() + "." + method.getName());
+            });
+            out.println("</ul>");
+            out.println("</body></html>");
         } catch (Exception e) {
             e.printStackTrace();
             res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur interne du framework.");

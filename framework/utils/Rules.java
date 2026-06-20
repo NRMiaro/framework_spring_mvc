@@ -2,7 +2,7 @@ package framework.utils;
 
 public class Rules {
     
-    public boolean isValidUrl(String URL){
+    public static boolean isValidUrl(String URL){
         // doit commencer par un '/'
         if (!URL.startsWith("/"))
             return false;

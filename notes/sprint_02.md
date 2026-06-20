@@ -7,10 +7,11 @@ Si l'URL est inconnue, afficher toutes les URL supportees
 - [x] Elements annotables: methodes
 - [x] Parametre: String url
 ## Update du scan des controllers:
-- [ ] Obtenir toutes les methodes annotees de @UrlMapping
-- [ ] Recuperer l'url passee
-- [ ] Stocker chaque url: Map<url, Method>
-- [ ] Verifier qu'il n'y a aucun doublon (ex: deux methodes annotees de la meme url)
+- [x] Obtenir toutes les methodes annotees de @UrlMapping
+- [x] Recuperer l'url passee
+- [x] Stocker chaque url: Map<url, Method>
+- [x] Verifier qu'il n'y a aucun doublon (ex: deux methodes annotees de la meme url)
 ## Gestion des URLs
+- [ ] afficher toutes les routes d'abord
 - [ ] obtenir l'url entree 
 - [ ] afficher: route -> ControllerClassName.method()   
