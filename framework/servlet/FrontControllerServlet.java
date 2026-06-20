@@ -19,6 +19,7 @@ public class FrontControllerServlet extends HttpServlet {
         try {
             loadParams();
             scanControllers();
+            scanUrls();
         } catch (Exception e) {
             throw new ServletException("Échec: ", e);
         }
@@ -50,6 +51,10 @@ public class FrontControllerServlet extends HttpServlet {
         this.listControllers = PackageScanner.getAnnotatedClassesNamesInPackage(
             controllersPackage,
             Controller.class);
+    }
+
+    private void scanUrls(){
+        
     }
 
     private void processRequest(HttpServletRequest req, HttpServletResponse res) throws IOException {
