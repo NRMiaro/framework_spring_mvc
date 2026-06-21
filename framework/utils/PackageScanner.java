@@ -12,15 +12,30 @@ public class PackageScanner {
         String packageName,
         Class<? extends Annotation> annotation
     ) throws IOException, ClassNotFoundException {
-        List<String> classesNames = new ArrayList<>();
+        List<String> classesNamesWithAnnotation = new ArrayList<>();
         List<Class<?>> classes = PackageScanner.findClassesInPackage(packageName);
         for (Class<?> clazz : classes) {
             if (clazz.getAnnotation(annotation) != null) {
-                classesNames.add(clazz.getName());
+                classesNamesWithAnnotation.add(clazz.getName());
             }
         }
 
-        return classesNames;
+        return classesNamesWithAnnotation;
+    }
+
+    public static List<Class<?>> getAnnotatedClassesInPackage(
+        String packageName,
+        Class<? extends Annotation> annotation
+    ) throws IOException, ClassNotFoundException {
+        List<Class<?>> classesWithAnnotation = new ArrayList<>();
+        List<Class<?>> classes = PackageScanner.findClassesInPackage(packageName);
+        for (Class<?> clazz : classes) {
+            if (clazz.getAnnotation(annotation) != null) {
+                classesWithAnnotation.add(clazz);
+            }
+        }
+
+        return classesWithAnnotation;
     }
 
     public static List<Class<?>> findClassesInPackage(String packageName)
