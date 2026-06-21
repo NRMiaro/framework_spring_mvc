@@ -12,6 +12,6 @@ Si l'URL est inconnue, afficher toutes les URL supportees
 - [x] Stocker chaque url: Map<url, Method>
 - [x] Verifier qu'il n'y a aucun doublon (ex: deux methodes annotees de la meme url)
 ## Gestion des URLs
-- [ ] afficher toutes les routes d'abord
-- [ ] obtenir l'url entree 
-- [ ] afficher: route -> ControllerClassName.method()   
+- [x] afficher toutes les routes d'abord
+- [x] obtenir l'url entree 
+- [x] afficher: route -> ControllerClassName.method()   
