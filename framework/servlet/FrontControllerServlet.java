@@ -1,21 +1,14 @@
 package framework.servlet;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.util.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
-import framework.annotations.Controller;
-import framework.annotations.UrlMapping;
-import framework.utils.PackageScanner;
-import framework.utils.Rules;
-import framework.utils.ScanException;
-import framework.utils.ServletUtils;
+import framework.annotations.*;
+import framework.exceptions.ScanException;
+import framework.utils.*;
 
 public class FrontControllerServlet extends HttpServlet {
 
@@ -27,7 +20,6 @@ public class FrontControllerServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         this.urlMapper = new HashMap<>();
-
         try {
             loadParams();
             scanControllers();
@@ -75,7 +67,8 @@ public class FrontControllerServlet extends HttpServlet {
 
     }
 
-    public void scanUrlsIn(Class<?> controllerClass) {
+    public void scanUrlsIn(Class<?> controllerClass)
+    throws ScanException {
 
         // verifier que c'est un controller
         if (controllerClass.getAnnotation(Controller.class) == null)
@@ -126,7 +119,6 @@ public class FrontControllerServlet extends HttpServlet {
                         .append("</li>")
         );
         content.append("</ul>");
-
         writeHtmlResponse(res, content.toString());
     }
 
@@ -140,6 +132,9 @@ public class FrontControllerServlet extends HttpServlet {
 
     private void processRequest(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String path = ServletUtils.getRequestPath(req);
+        res.getWriter().print(path);
+        while (path.endsWith("/"))
+            path = path.substring(0, path.length() - 1);
         Method method = urlMapper.get(path);
         if (method == null) {
             displayValidUrls(res);
