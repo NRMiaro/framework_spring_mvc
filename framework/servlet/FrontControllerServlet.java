@@ -7,7 +7,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
 import framework.annotations.*;
+import framework.exceptions.RouteException;
 import framework.exceptions.ScanException;
+import framework.http.HttpMethod;
+import framework.http.Route;
 import framework.utils.*;
 
 public class FrontControllerServlet extends HttpServlet {
@@ -15,11 +18,13 @@ public class FrontControllerServlet extends HttpServlet {
     private String controllersPackage;
     // private List<String> controllerNames;
     private List<Class<?>> controllerClasses;
-    private Map<String, Method> urlMapper;
+    // Version de urlMapper durant sprint_02
+    // private Map<String, Method> urlMapper;
+    private Map<Route, Method> routeMapper;
 
     @Override
     public void init() throws ServletException {
-        this.urlMapper = new HashMap<>();
+        this.routeMapper = new HashMap<>();
         try {
             loadParams();
             scanControllers();
@@ -78,14 +83,15 @@ public class FrontControllerServlet extends HttpServlet {
             UrlMapping urlMapping = method.getAnnotation(UrlMapping.class);
             if (urlMapping != null) {
                 String URL = urlMapping.url();
-                if (urlMapper.containsKey(URL)) {
-                    // version simple sans check de method POST/GET/...
-                    // donc pour l'instant une meme route est attribuable a une seule fonction
-                    throw new ScanException("L'URL: " + URL + " a ete utilisee pour plusieurs methodes");
-                } else if (!Rules.isValidUrl(URL))
-                    throw new ScanException("URL invalide pour " + controllerClass.getName() + "." + method.getName());
+                HttpMethod httpMethod = urlMapping.httpMethod();
+                Route newRoute = new Route(URL, httpMethod);
+                if (routeMapper.containsKey(newRoute)) {
+                    throw new RouteException(newRoute, method);
+                }
+                // } else if (!Rules.isValidUrl(URL))
+                //     throw new ScanException("URL invalide pour " + controllerClass.getName() + "." + method.getName());
 
-                urlMapper.put(URL, method);
+                routeMapper.put(newRoute, method);
             }
         }
 
@@ -109,9 +115,9 @@ public class FrontControllerServlet extends HttpServlet {
     private void displayValidUrls(HttpServletResponse res) throws IOException {
         StringBuilder content = new StringBuilder();
         content.append("<h3>Routes valides: </h3><br><ul>");
-        urlMapper.forEach((url, method) ->
+        routeMapper.forEach((route, method) ->
                 content.append("<li>")
-                        .append(url)
+                        .append(route.getHttpMethod().toString() + route.getUrl())
                         .append(" -> ")
                         .append(method.getDeclaringClass().getName())
                         .append(".")
@@ -131,16 +137,18 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     private void processRequest(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        String path = ServletUtils.getRequestPath(req);
-        res.getWriter().print(path);
-        while (path.endsWith("/"))
-            path = path.substring(0, path.length() - 1);
-        Method method = urlMapper.get(path);
-        if (method == null) {
-            displayValidUrls(res);
-        } else {
-            displayInvokedMethodInfos(res, method);
-        }
+        displayValidUrls(res);
+        return;
+        // String path = ServletUtils.getRequestPath(req);
+        // res.getWriter().print(path);
+        // while (path.endsWith("/"))
+        //     path = path.substring(0, path.length() - 1);
+        // Method method = routeMapper.get(path);
+        // if (method == null) {
+        //     displayValidUrls(res);
+        // } else {
+        //     displayInvokedMethodInfos(res, method);
+        // }
     }
 
 }
