@@ -20,7 +20,7 @@ public class FrontControllerServlet extends HttpServlet {
     private List<Class<?>> controllerClasses;
     // Version de urlMapper durant sprint_02
     // private Map<String, Method> urlMapper;
-    private Map<Route, Method> routeMapper;
+    private Map<Route, MethodDescriptor> routeMapper;
 
     @Override
     public void init() throws ServletException {
@@ -73,7 +73,7 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     public void scanUrlsIn(Class<?> controllerClass)
-    throws ScanException {
+            throws ScanException {
 
         // verifier que c'est un controller
         if (controllerClass.getAnnotation(Controller.class) == null)
@@ -89,15 +89,17 @@ public class FrontControllerServlet extends HttpServlet {
                     throw new RouteException(newRoute, method);
                 }
                 // } else if (!Rules.isValidUrl(URL))
-                //     throw new ScanException("URL invalide pour " + controllerClass.getName() + "." + method.getName());
+                // throw new ScanException("URL invalide pour " + controllerClass.getName() +
+                // "." + method.getName());
 
-                routeMapper.put(newRoute, method);
+                routeMapper.put(newRoute, new MethodDescriptor(controllerClass, method));
             }
         }
 
     }
 
-    // Methode generique: ecrit une page HTML complete a partir d'un fragment de contenu.
+    // Methode generique: ecrit une page HTML complete a partir d'un fragment de
+    // contenu.
     // Autonome (aucune dependance a un fichier externe type JSP), donc utilisable
     // telle quelle une fois le framework empaquete en .jar.
     private void writeHtmlResponse(HttpServletResponse res, String bodyContent) throws IOException {
@@ -114,41 +116,53 @@ public class FrontControllerServlet extends HttpServlet {
 
     private void displayValidUrls(HttpServletResponse res) throws IOException {
         StringBuilder content = new StringBuilder();
-        content.append("<h3>Routes valides: </h3><br><ul>");
-        routeMapper.forEach((route, method) ->
-                content.append("<li>")
-                        .append(route.getHttpMethod().toString() + route.getUrl())
-                        .append(" -> ")
-                        .append(method.getDeclaringClass().getName())
-                        .append(".")
-                        .append(method.getName())
-                        .append("</li>")
-        );
+        content.append("<h3>Routes connues: </h3><br><ul>");
+        routeMapper.forEach((route, methodDescriptor) -> content.append("<li>")
+                .append(route.getHttpMethod().toString() + route.getUrl())
+                .append(" -> ")
+                .append(methodDescriptor.getOwnerClass().getName())
+                .append(".")
+                .append(methodDescriptor.getMethod().getName())
+                .append("</li>"));
         content.append("</ul>");
         writeHtmlResponse(res, content.toString());
     }
 
-    private void displayInvokedMethodInfos(HttpServletResponse res, Method method) throws IOException {
-        String content = "<p>Methode appelee: "
-                + method.getDeclaringClass().getName() + "." + method.getName()
-                + "</p>";
+    private void displayInvokedMethodInfos(HttpServletResponse res, MethodDescriptor methodDescriptor)
+            throws IOException {
+        Method method = methodDescriptor.getMethod();
+        Class<?> ownerClass = methodDescriptor.getOwnerClass();
 
-        writeHtmlResponse(res, content);
+        try {
+            Object instance = ownerClass.getDeclaredConstructor().newInstance();
+            Object result = method.invoke(instance);
+
+            String content = "<p>Methode appelee: "
+                    + ownerClass.getName() + "." + method.getName()
+                    + "</p><p>Resultat: " + result + "</p>";
+            writeHtmlResponse(res, content);
+
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Erreur lors de l'invocation de la methode", e);
+        }
     }
 
-    private void processRequest(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        displayValidUrls(res);
-        return;
-        // String path = ServletUtils.getRequestPath(req);
-        // res.getWriter().print(path);
+    private void processRequest(HttpServletRequest req, HttpServletResponse res)
+            throws IOException {
+        String path = ServletUtils.getRequestPath(req);
+        HttpMethod httpMethod = HttpMethod.from(req.getMethod());
+        if (httpMethod == null) {
+            throw new RuntimeException("Methode " + req.getMethod() + " non supportee");
+        }
+        res.getWriter().print(path);
         // while (path.endsWith("/"))
-        //     path = path.substring(0, path.length() - 1);
-        // Method method = routeMapper.get(path);
-        // if (method == null) {
-        //     displayValidUrls(res);
-        // } else {
-        //     displayInvokedMethodInfos(res, method);
-        // }
+        // path = path.substring(0, path.length() - 1);
+        MethodDescriptor methodDescriptor = routeMapper.get(new Route(path, httpMethod));
+        if (methodDescriptor == null) {
+            displayValidUrls(res);
+        } else {
+            displayInvokedMethodInfos(res, methodDescriptor);
+        }
     }
 
 }
