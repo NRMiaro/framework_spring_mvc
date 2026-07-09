@@ -118,7 +118,7 @@ public class FrontControllerServlet extends HttpServlet {
         StringBuilder content = new StringBuilder();
         content.append("<h3>Routes connues: </h3><br><ul>");
         routeMapper.forEach((route, methodDescriptor) -> content.append("<li>")
-                .append(route.getHttpMethod().toString() + route.getUrl())
+                .append(route.getHttpMethod().toString() + " " + route.getUrl())
                 .append(" -> ")
                 .append(methodDescriptor.getOwnerClass().getName())
                 .append(".")
