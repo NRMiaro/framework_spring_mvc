@@ -38,6 +38,19 @@ public class PackageScanner {
         return classesWithAnnotation;
     }
 
+    public static void findAnnotatedClassesInPackage(
+        String packageName,
+        Class<? extends Annotation> annotation,
+        List<Class<?>> result
+    ) throws IOException, ClassNotFoundException {
+        List<Class<?>> classes = PackageScanner.findClassesInPackage(packageName);
+        for (Class<?> clazz : classes) {
+            if (clazz.getAnnotation(annotation) != null) {
+                result.add(clazz);
+            }
+        }
+    }
+
     public static List<Class<?>> findClassesInPackage(String packageName)
     throws IOException, ClassNotFoundException {
         String path = packageName.replace('.', '/');
