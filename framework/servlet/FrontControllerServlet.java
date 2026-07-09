@@ -22,15 +22,15 @@ public class FrontControllerServlet extends HttpServlet {
     // private Map<String, Method> urlMapper;
     private Map<Route, MethodDescriptor> routeMapper;
 
+    @SuppressWarnings("unchecked")
     @Override
     public void init() throws ServletException {
-        this.routeMapper = new HashMap<>();
-        try {
-            loadParams();
-            scanControllers();
-        } catch (Exception e) {
-            throw new ServletException("Échec: ", e);
-        }
+        /**
+         * On prend les donnees obtenues lors du deployage de l'app
+         * dans le servletContext
+         */
+        this.controllerClasses = (List<Class<?>>) getServletContext().getAttribute("controllers_list");
+        this.routeMapper = (Map<Route, MethodDescriptor>) getServletContext().getAttribute("route_mapper"); 
     }
 
     @Override
@@ -47,7 +47,7 @@ public class FrontControllerServlet extends HttpServlet {
     private void loadParams() {
         // package des @Controller
         final String PACKAGE_NAME_PARAM = "controller_package_name";
-        this.controllersPackage = this.getInitParameter(PACKAGE_NAME_PARAM);
+        this.controllersPackage = this.getServletContext().getInitParameter(PACKAGE_NAME_PARAM);
     }
 
     private void scanControllers()
@@ -118,7 +118,7 @@ public class FrontControllerServlet extends HttpServlet {
         StringBuilder content = new StringBuilder();
         content.append("<h3>Routes connues: </h3><br><ul>");
         routeMapper.forEach((route, methodDescriptor) -> content.append("<li>")
-                .append(route.getHttpMethod().toString() + route.getUrl())
+                .append(route.getHttpMethod().toString() + " " + route.getUrl())
                 .append(" -> ")
                 .append(methodDescriptor.getOwnerClass().getName())
                 .append(".")
