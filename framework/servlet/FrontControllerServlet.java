@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
 import framework.annotations.*;
+import framework.core.ModelAndView;
 import framework.exceptions.RouteException;
 import framework.exceptions.ScanException;
 import framework.http.HttpMethod;
@@ -161,7 +162,11 @@ public class FrontControllerServlet extends HttpServlet {
         if (methodDescriptor == null) {
             displayValidUrls(res);
         } else {
-            displayInvokedMethodInfos(res, methodDescriptor);
+            // displayInvokedMethodInfos(res, methodDescriptor);
+            Method method = methodDescriptor.getMethod();
+            if (!method.getReturnType().equals(ModelAndView.class)){
+                
+            }
         }
     }
 

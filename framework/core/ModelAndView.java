@@ -7,6 +7,10 @@ public class ModelAndView {
     private String pageName;
     private HashMap<String, Object> attributes;
 
+    public ModelAndView(){
+        this(null, new HashMap<>());
+    }
+
     public ModelAndView(String pageName, HashMap<String, Object> attributes){
         this.pageName = pageName;
         this.attributes = attributes;
