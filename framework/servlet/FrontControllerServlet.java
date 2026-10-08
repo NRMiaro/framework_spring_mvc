@@ -163,10 +163,15 @@ public class FrontControllerServlet extends HttpServlet {
             displayValidUrls(res);
         } else {
             // displayInvokedMethodInfos(res, methodDescriptor);
-            Method method = methodDescriptor.getMethod();
-            if (!method.getReturnType().equals(ModelAndView.class)){
-                
-            }
+            try {
+                Object returnValue = MethodExecutor.executeMethod(methodDescriptor);
+                if (returnValue instanceof ModelAndView mv){
+                    displayInvokedMethodInfos(res, methodDescriptor);
+                    // avy eo ampiana utilisation de ModelAndView mv
+                } else {
+                    throw new RuntimeException();
+                }
+            } catch (Exception e) {}
         }
     }
 

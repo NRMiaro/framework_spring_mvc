@@ -36,4 +36,9 @@ public class ModelAndView {
         this.attributes.put(attributeName, data);
     }
 
+    @Override 
+    public String toString(){
+        return "(ModelAndView) pageName: " + pageName;
+    }
+
 }
