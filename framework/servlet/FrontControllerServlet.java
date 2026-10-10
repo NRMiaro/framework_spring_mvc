@@ -3,11 +3,15 @@ package framework.servlet;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.Map.Entry;
+
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 
 import framework.annotations.*;
 import framework.core.ModelAndView;
+import framework.core.ViewNameHandler;
 import framework.exceptions.RouteException;
 import framework.exceptions.ScanException;
 import framework.http.HttpMethod;
@@ -152,26 +156,50 @@ public class FrontControllerServlet extends HttpServlet {
             throws IOException {
         String path = ServletUtils.getRequestPath(req);
         HttpMethod httpMethod = HttpMethod.from(req.getMethod());
+        res.getWriter().print(path); 
+        
         if (httpMethod == null) {
             throw new RuntimeException("Methode " + req.getMethod() + " non supportee");
         }
-        res.getWriter().print(path);
-        // while (path.endsWith("/"))
-        // path = path.substring(0, path.length() - 1);
+
         MethodDescriptor methodDescriptor = routeMapper.get(new Route(path, httpMethod));
+
         if (methodDescriptor == null) {
             displayValidUrls(res);
-        } else {
-            // displayInvokedMethodInfos(res, methodDescriptor);
+        } 
+        else {
             try {
                 Object returnValue = MethodExecutor.executeMethod(methodDescriptor);
                 if (returnValue instanceof ModelAndView mv){
-                    displayInvokedMethodInfos(res, methodDescriptor);
-                    // avy eo ampiana utilisation de ModelAndView mv
+                    transferAttributesToRequest(mv, req);
+                    String pageName = mv.getPageName();
+                    pageName = ViewNameHandler.prefix + pageName + ViewNameHandler.suffix;
+                    res.getWriter().print(pageName);
+                    
+                    if (pageName != null && !pageName.trim().isEmpty()){
+                        RequestDispatcher disp = req.getRequestDispatcher(pageName);
+                        disp.forward(req, res);
+                    }
+
                 } else {
                     throw new RuntimeException();
                 }
             } catch (Exception e) {}
+        }
+    }
+
+    private void transferAttributesToRequest(ModelAndView mv, HttpServletRequest request){
+        if (mv == null || request == null) {
+            return;
+        }
+
+        Map<String, Object> attributes = mv.getAttributes();
+        if (attributes != null) {
+            attributes.forEach((key, value) -> {
+                if (key != null) {
+                    request.setAttribute(key, value);
+                }
+            });
         }
     }
 

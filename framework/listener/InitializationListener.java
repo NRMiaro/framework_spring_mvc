@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import framework.annotations.Controller;
+import framework.core.ViewNameHandler;
 import framework.exceptions.ScanException;
 import framework.http.Route;
 import framework.utils.MethodDescriptor;
@@ -34,6 +35,15 @@ public class InitializationListener implements ServletContextListener {
             // ajout des donnees necessaires au FrontControllerServlet dans le context
             context.setAttribute("controllers_list", controllerClasses);
             context.setAttribute("route_mapper", routeMapper);
+
+            String viewPrefix = context.getInitParameter("view_prefix");
+            if (viewPrefix == null){ viewPrefix = "WEB-INF/jsp/"; }
+
+            String viewSuffix = context.getInitParameter("view_suffix");
+            if (viewSuffix == null){ viewSuffix = ".jsp"; }
+
+            ViewNameHandler.setPrefix(viewPrefix);
+            ViewNameHandler.setSuffix(viewSuffix);
 
             System.out.println("Framework initialisé avec succès.");
             System.out.println("==================");
