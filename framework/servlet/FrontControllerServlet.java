@@ -3,8 +3,6 @@ package framework.servlet;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.Map.Entry;
-
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
@@ -119,6 +117,16 @@ public class FrontControllerServlet extends HttpServlet {
         }
     }
 
+    private void writeJsonResponse(HttpServletResponse res, String jsonContent) throws IOException {
+        res.setContentType("application/json;charset=UTF-8");
+        try (PrintWriter out = res.getWriter()) {
+            out.println(jsonContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur interne du framework.");
+        }
+    }
+
     private void displayValidUrls(HttpServletResponse res) throws IOException {
         StringBuilder content = new StringBuilder();
         content.append("<h3>Routes connues: </h3><br><ul>");
@@ -156,17 +164,26 @@ public class FrontControllerServlet extends HttpServlet {
             throws IOException {
         String path = ServletUtils.getRequestPath(req);
         HttpMethod httpMethod = HttpMethod.from(req.getMethod());
-        res.getWriter().print(path); 
         
         if (httpMethod == null) {
             throw new RuntimeException("Methode " + req.getMethod() + " non supportee");
         }
 
         MethodDescriptor methodDescriptor = routeMapper.get(new Route(path, httpMethod));
-
+        Method method = null;
         if (methodDescriptor == null) {
             displayValidUrls(res);
-        } 
+        } else { method = methodDescriptor.getMethod(); }
+
+        if (method.isAnnotationPresent(ApiRest.class)){
+            // writeHtmlResponse(res, "Vous avez appele une REST API");
+            try {
+                String jsonResult = MethodExecutor.executeApiRestMethod(methodDescriptor);
+                writeJsonResponse(res, jsonResult);            
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
+        }
         else {
             try {
                 Object returnValue = MethodExecutor.executeMethod(methodDescriptor);
