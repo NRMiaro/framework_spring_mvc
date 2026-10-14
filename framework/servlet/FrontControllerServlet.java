@@ -2,6 +2,7 @@ package framework.servlet;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -161,7 +162,7 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     private void processRequest(HttpServletRequest req, HttpServletResponse res)
-            throws IOException {
+    throws IOException {
         String path = ServletUtils.getRequestPath(req);
         HttpMethod httpMethod = HttpMethod.from(req.getMethod());
         
@@ -185,13 +186,13 @@ public class FrontControllerServlet extends HttpServlet {
             }
         }
         else {
+            Parameter[] parameters = method.getParameters();
             try {
                 Object returnValue = MethodExecutor.executeMethod(methodDescriptor);
                 if (returnValue instanceof ModelAndView mv){
                     transferAttributesToRequest(mv, req);
                     String pageName = mv.getPageName();
                     pageName = ViewNameHandler.prefix + pageName + ViewNameHandler.suffix;
-                    res.getWriter().print(pageName);
                     
                     if (pageName != null && !pageName.trim().isEmpty()){
                         RequestDispatcher disp = req.getRequestDispatcher(pageName);
@@ -201,7 +202,9 @@ public class FrontControllerServlet extends HttpServlet {
                 } else {
                     throw new RuntimeException();
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                writeHtmlResponse(res, e.getMessage());
+            }
         }
     }
 
@@ -218,6 +221,18 @@ public class FrontControllerServlet extends HttpServlet {
                 }
             });
         }
+    }
+
+    private void displayParameters(HttpServletRequest req, HttpServletResponse res) 
+    throws IOException {
+        Enumeration<String> attributes = req.getParameterNames();
+        StringBuilder sb = new StringBuilder();
+        while (attributes.hasMoreElements()) {
+            String attribute = attributes.nextElement();
+            sb.append("<p>" + attribute + ": " + req.getParameter(attribute) + "</p>");
+        }
+
+        writeHtmlResponse(res, sb.toString());
     }
 
 }

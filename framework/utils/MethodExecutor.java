@@ -7,14 +7,7 @@ import framework.annotations.ApiRest;
 public class MethodExecutor {
     
     public static Object executeMethod(MethodDescriptor methodDescriptor) throws Exception {
-        Method method = methodDescriptor.getMethod();
-        Class<?> ownerClass = methodDescriptor.getOwnerClass();
-
-        Object returnValue = method.invoke(
-            ownerClass.getDeclaredConstructor().newInstance(), 
-            new Object[0]
-        ); 
-        return returnValue;
+        return executeMethod(methodDescriptor, new Object[0]);
     }
 
     public static String executeApiRestMethod(MethodDescriptor methodDescriptor) throws Exception {
@@ -28,6 +21,18 @@ public class MethodExecutor {
         else jsonResult = (new JsonConverter()).toJson(returnValue);
 
         return jsonResult;
+    }
+
+    public static Object executeMethod(MethodDescriptor methodDescriptor, Object[] args)
+    throws Exception {
+        Method method = methodDescriptor.getMethod();
+        Class<?> ownerClass = methodDescriptor.getOwnerClass();
+
+        Object returnValue = method.invoke(
+            ownerClass.getDeclaredConstructor().newInstance(), 
+            args
+        ); 
+        return returnValue;
     }
 
 }
