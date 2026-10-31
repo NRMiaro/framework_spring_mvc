@@ -12,6 +12,8 @@ import framework.annotations.Model;
 import framework.annotations.UrlMapping;
 import framework.core.MapFile;
 import framework.core.ModelAndView;
+import framework.core.Session;
+import framework.core.SessionManager;
 import framework.core.ViewNameHandler;
 import framework.exceptions.RouteException;
 import framework.exceptions.ScanException;
@@ -113,7 +115,11 @@ public class ServletUtils {
             // si le developpeur l'appelle directement depuis le controller 
             else if (p.getType().equals(MapFile.class)){
                 args[i] = FileConverter.convert(p.getName(), req);
-            } else {
+            }
+            else if (p.getType().equals(Session.class)){
+                args[i] = SessionManager.getSession(req);
+            }
+            else {
                 String value = req.getParameter(p.getName());
                 args[i] = ParameterConverter.convert(value, p.getType());
             }
