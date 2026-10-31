@@ -10,6 +10,7 @@ import java.util.Map;
 import framework.annotations.Controller;
 import framework.annotations.Model;
 import framework.annotations.UrlMapping;
+import framework.core.MapFile;
 import framework.core.ModelAndView;
 import framework.core.ViewNameHandler;
 import framework.exceptions.RouteException;
@@ -101,10 +102,17 @@ public class ServletUtils {
     public static Object[] getParamValues(Method method, HttpServletRequest req) throws Exception {
         Parameter[] parameters = method.getParameters();
         Object[] args = new Object[parameters.length];
+
         for (int i = 0; i < parameters.length; i++) {
             Parameter p = parameters[i];
+            // On cree l'objet annote @Model 
             if (p.isAnnotationPresent(Model.class)) {
                 args[i] = ParameterConverter.bindObject(p.getType(), req);
+            } 
+            // On cree l'objet MapFile 
+            // si le developpeur l'appelle directement depuis le controller 
+            else if (p.getType().equals(MapFile.class)){
+                args[i] = FileConverter.convert(p.getName(), req);
             } else {
                 String value = req.getParameter(p.getName());
                 args[i] = ParameterConverter.convert(value, p.getType());

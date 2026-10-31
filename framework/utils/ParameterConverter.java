@@ -2,6 +2,7 @@ package framework.utils;
 
 import java.lang.reflect.Field;
 
+import framework.core.MapFile;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
 
@@ -71,6 +72,11 @@ public class ParameterConverter {
         Object obj = type.getDeclaredConstructor().newInstance();
         for (Field f : type.getDeclaredFields()) {
             f.setAccessible(true);
+
+            if (f.getType().equals(MapFile.class)){
+
+            }
+
             String value = req.getParameter(f.getName());
             if (value == null) 
                 continue;

@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.*;
 
 import framework.annotations.ApiRest;
@@ -13,6 +14,7 @@ import framework.http.HttpMethod;
 import framework.http.Route;
 import framework.utils.*;
 
+@MultipartConfig 
 public class FrontControllerServlet extends HttpServlet {
 
     private Map<Route, MethodDescriptor> routeMapper;
@@ -74,7 +76,10 @@ public class FrontControllerServlet extends HttpServlet {
 
         try {
             Method method = md.getMethod();
+
+            // obtention de tous les arguments necessaires a la methode a invoquer
             Object[] args = ServletUtils.getParamValues(method, req);
+
             Object result = MethodExecutor.executeMethod(md, args);
             if (method.isAnnotationPresent(ApiRest.class)) {
                 String json = (result instanceof String r) ? r : new JsonConverter().toJson(result);
