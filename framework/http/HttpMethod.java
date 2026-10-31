@@ -24,4 +24,9 @@ public enum HttpMethod {
                 return null;
         }
     }
+
+    public boolean isGet(){ return this.equals(GET); }
+    public boolean isDelete(){ return this.equals(DELETE); }
+    public boolean isPost(){ return this.equals(POST); }
+    public boolean isPut(){ return this.equals(PUT); }
 }

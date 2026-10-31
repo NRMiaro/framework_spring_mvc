@@ -6,6 +6,7 @@ set -e
 LIB="lib"
 BIN="bin"
 BUILD="build"
+
 GSON="$LIB/gson-2.14.0.jar"
 SERVLET="$LIB/servlet-api.jar"
 
@@ -24,20 +25,26 @@ fi
 rm -rf "$BIN" "$BUILD"
 mkdir -p "$BIN" "$BUILD"
 
-# Recherche des sources
-find . -path "./bin" -prune -o \
-       -path "./build" -prune -o \
-       -path "./.git" -prune -o \
-       -name "*.java" -print > sources.txt
+# Recherche des sources Java
+find . \
+    -path "./bin" -prune -o \
+    -path "./build" -prune -o \
+    -path "./.git" -prune -o \
+    -name "*.java" -print > sources.txt
 
 # Compilation
-javac -cp "$SERVLET:$GSON" -d "$BIN" @sources.txt
+javac \
+    -parameters \
+    -cp "$SERVLET:$GSON" \
+    -d "$BIN" \
+    @sources.txt
 
 rm sources.txt
 
-# Préparation du JAR autonome
+# Préparation du JAR
 cp -r "$BIN"/. "$BUILD"/
 
+# Intégration des classes de Gson
 (
     cd "$BUILD"
     jar xf "../$GSON"
@@ -45,5 +52,8 @@ cp -r "$BIN"/. "$BUILD"/
 
 # Création du JAR final
 jar cf framework.jar -C "$BUILD" .
+
+# Nettoyage
+rm -rf "$BIN" "$BUILD"
 
 echo "Compilation terminée : framework.jar"

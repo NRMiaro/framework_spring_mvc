@@ -1,18 +1,26 @@
 package framework.utils;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Map;
 
 import framework.annotations.Controller;
 import framework.annotations.UrlMapping;
+import framework.core.ModelAndView;
+import framework.core.ViewNameHandler;
 import framework.exceptions.RouteException;
 import framework.exceptions.ScanException;
 import framework.http.*;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class ServletUtils {
 
-    // Retourne le path relatif a l'application, sans le context path, sans query string
+    // Retourne le path relatif a l'application, sans le context path, sans query
+    // string
     // ex: requete vers http://localhost:8080/monapp/user?id=5
     // -> retourne "/user"
     public static String getRequestPath(HttpServletRequest req) {
@@ -22,15 +30,14 @@ public class ServletUtils {
     }
 
     public static void scanUrlsIn(
-        Class<?> controllerClass,
-        Map<Route, MethodDescriptor> existingRouteMapper
-    ){
+            Class<?> controllerClass,
+            Map<Route, MethodDescriptor> existingRouteMapper) {
         // verifier qu'on scanne bien un controller
         if (!controllerClass.isAnnotationPresent(Controller.class))
             throw new ScanException("Erreur lors du scan: " + controllerClass.getName() + " n'est pas un Controller");
 
         // traiter chaque method de la class et voir si annotee @UrlMapping
-        for (Method method : controllerClass.getDeclaredMethods()){
+        for (Method method : controllerClass.getDeclaredMethods()) {
             UrlMapping urlMapping = method.getAnnotation(UrlMapping.class);
             if (urlMapping == null)
                 continue;
@@ -48,9 +55,53 @@ public class ServletUtils {
 
             MethodDescriptor methodDescriptor = new MethodDescriptor(controllerClass, method);
             existingRouteMapper.put(
-                route,
-                methodDescriptor
-            );
+                    route,
+                    methodDescriptor);
         }
+    }
+
+    public static void writeHtml(HttpServletResponse res, String body) throws IOException {
+        write(res, "text/html;charset=UTF-8", "<!DOCTYPE html><html><body>" + body + "</body></html>");
+    }
+
+    public static void writeJson(HttpServletResponse res, String json) throws IOException {
+        write(res, "application/json;charset=UTF-8", json);
+    }
+
+    private static void write(HttpServletResponse res, String contentType, String content) throws IOException {
+        res.setContentType(contentType);
+        try (PrintWriter out = res.getWriter()) {
+            out.println(content);
+        }
+    }
+
+    public static String routesToHtml(Map<Route, MethodDescriptor> routes) {
+        StringBuilder sb = new StringBuilder("<h3>Routes connues :</h3><ul>");
+        routes.forEach((r, md) -> sb.append("<li>").append(r.getHttpMethod()).append(" ").append(r.getUrl())
+                .append(" -> ").append(md.getOwnerClass().getName())
+                .append(".").append(md.getMethod().getName()).append("</li>"));
+        return sb.append("</ul>").toString();
+    }
+
+    // Transfère les attributs du ModelAndView puis forward vers la vue
+    public static void render(ModelAndView mv, HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (mv.getAttributes() != null) {
+            mv.getAttributes().forEach((k, v) -> {
+                if (k != null)
+                    req.setAttribute(k, v);
+            });
+        }
+        req.getRequestDispatcher(ViewNameHandler.resolve(mv.getPageName())).forward(req, res);
+    }
+
+
+    public static Object[] getParamValues(Method method, HttpServletRequest req) {
+        return Arrays.stream(method.getParameters())
+                .map(p -> {
+                    String value = req.getParameter(p.getName());
+                    return ParameterConverter.convert(value, p.getType());
+                })
+                .toArray(Object[]::new);
     }
 }
