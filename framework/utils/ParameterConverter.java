@@ -1,5 +1,10 @@
 package framework.utils;
 
+import java.lang.reflect.Field;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
+
 public class ParameterConverter {
 
     public static Object convert(String value, Class<?> targetType) {
@@ -61,4 +66,17 @@ public class ParameterConverter {
             "Type non supporté : " + targetType.getName()
         );
     }
+
+    public static Object bindObject(Class<?> type, HttpServletRequest req) throws Exception {
+        Object obj = type.getDeclaredConstructor().newInstance();
+        for (Field f : type.getDeclaredFields()) {
+            f.setAccessible(true);
+            String value = req.getParameter(f.getName());
+            if (value == null) 
+                continue;
+            f.set(obj, convert(value, f.getType()));
+        }
+        return obj;
+    }
+
 }

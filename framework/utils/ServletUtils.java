@@ -3,10 +3,12 @@ package framework.utils;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.Map;
 
 import framework.annotations.Controller;
+import framework.annotations.Model;
 import framework.annotations.UrlMapping;
 import framework.core.ModelAndView;
 import framework.core.ViewNameHandler;
@@ -96,12 +98,19 @@ public class ServletUtils {
     }
 
 
-    public static Object[] getParamValues(Method method, HttpServletRequest req) {
-        return Arrays.stream(method.getParameters())
-                .map(p -> {
-                    String value = req.getParameter(p.getName());
-                    return ParameterConverter.convert(value, p.getType());
-                })
-                .toArray(Object[]::new);
+    public static Object[] getParamValues(Method method, HttpServletRequest req) throws Exception {
+        Parameter[] parameters = method.getParameters();
+        Object[] args = new Object[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter p = parameters[i];
+            if (p.isAnnotationPresent(Model.class)) {
+                args[i] = ParameterConverter.bindObject(p.getType(), req);
+            } else {
+                String value = req.getParameter(p.getName());
+                args[i] = ParameterConverter.convert(value, p.getType());
+            }
+        }
+
+        return args;
     }
 }
