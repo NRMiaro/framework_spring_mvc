@@ -9,7 +9,13 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.*;
 
 import framework.annotations.ApiRest;
+import framework.annotations.Auth;
+import framework.annotations.Role;
+import framework.core.AuthManager;
 import framework.core.ModelAndView;
+import framework.core.RoleManager;
+import framework.core.Session;
+import framework.core.SessionManager;
 import framework.http.HttpMethod;
 import framework.http.Route;
 import framework.utils.*;
@@ -76,6 +82,37 @@ public class FrontControllerServlet extends HttpServlet {
 
         try {
             Method method = md.getMethod();
+
+            // Récupération de la session
+            Session session = SessionManager.getSession(req);
+
+            // Vérification de l'annotation Auth
+            if (method.isAnnotationPresent(Auth.class)) {
+
+                if (!AuthManager.isAuthenticated(session)) {
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                            "Authentication required");
+                    return;
+                }
+            }
+
+            // Vérification de l'annotation Role
+            if (method.isAnnotationPresent(Role.class)) {
+                // Un rôle implique une authentification
+                if (!AuthManager.isAuthenticated(session)) {
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                            "Authentication required");
+                    return;
+                }
+
+                Role roleAnnotation = method.getAnnotation(Role.class);
+
+                if (!RoleManager.hasAnyRole(session, roleAnnotation.value())) {
+                    res.sendError(HttpServletResponse.SC_FORBIDDEN,
+                            "Access denied");
+                    return;
+                }
+            }
 
             // obtention de tous les arguments necessaires a la methode a invoquer
             Object[] args = ServletUtils.getParamValues(method, req);
